@@ -1,4 +1,4 @@
-<!-- agent-economy:start v0.1.1 -->
+<!-- agent-economy:start v0.1.2 -->
 ## Economía de agentes
 
 Gasta tokens donde cambian el resultado. Las reglas van por **nivel**, nunca por nombre de modelo;

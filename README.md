@@ -46,6 +46,11 @@ The installer is idempotent, so run it again to upgrade. It:
 4. Adds its hooks to `.claude/settings.json`, `.codex/hooks.json` (and `hooks = true`) and
    `.opencode/plugin/`, without touching hooks that are already there.
 
+**Instruction file with a size cap?** Use `--policy-file docs/AGENT_ECONOMY.md`: the full block goes
+there (frontmatter and other content are kept), the instruction file gets a one-line pointer,
+and the session-start hook injects the policy so Claude Code still loads it. The choice is
+remembered in `.agent-economy.json` (`policy.file`), so upgrades keep it.
+
 Limit it with `--harness claude,codex`. Use `--lang es` for the Spanish policy block
 (`POLICY.es.md`); translations are welcome.
 

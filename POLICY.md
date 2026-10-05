@@ -1,4 +1,4 @@
-<!-- agent-economy:start v0.1.1 -->
+<!-- agent-economy:start v0.1.2 -->
 ## Agent economy
 
 Spend tokens where they change the result. Rules are by **tier**, never by model name; the

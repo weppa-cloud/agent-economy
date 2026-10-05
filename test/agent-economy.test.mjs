@@ -146,6 +146,26 @@ test('install --lang es writes the Spanish block; unknown language fails', () =>
   assert.throws(() => install(tmp(), { lang: 'xx', log: () => {} }), /no policy/);
 });
 
+test('pointer mode: full policy in its own file, one-line pointer kept inline, hook injects it', () => {
+  const dir = tmp();
+  mkdirSync(join(dir, 'docs'));
+  writeFileSync(join(dir, 'docs', 'ECON.md'), '---\nstatus: active\n---\n\n# Econ\n');
+  writeFileSync(join(dir, 'CLAUDE.md'), '# P\n- tools · <!-- agent-economy:start v0.1.0 -->old<!-- agent-economy:end -->\n- last\n');
+  install(dir, { policyFile: 'docs/ECON.md', harnesses: [], log: () => {} });
+  install(dir, { harnesses: [], log: () => {} }); // re-run remembers pointer mode
+  const claude = readFileSync(join(dir, 'CLAUDE.md'), 'utf8');
+  assert.equal(claude.split('\n').length, 4);
+  assert.match(claude, /- tools · <!-- agent-economy:start v[\d.]+ -->Agent economy \(tiers, not model names\): docs\/ECON.md<!-- agent-economy:end -->\n- last/);
+  const econ = readFileSync(join(dir, 'docs', 'ECON.md'), 'utf8');
+  assert.match(econ, /^---\nstatus: active\n---/);
+  assert.equal((econ.match(/agent-economy:start/g) || []).length, 1);
+  const cfg = JSON.parse(readFileSync(join(dir, '.agent-economy.json'), 'utf8'));
+  assert.equal(cfg.policy.file, 'docs/ECON.md');
+  const out = render(cfg, 'claude-code', dir);
+  assert.match(out, /rules in docs\/ECON.md/);
+  assert.match(out, /Session economy:/);
+});
+
 test('dry run writes nothing', () => {
   const dir = tmp();
   install(dir, { dryRun: true, log: () => {} });
