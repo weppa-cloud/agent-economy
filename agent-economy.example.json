@@ -1,0 +1,22 @@
+{
+  "tiers": {
+    "claude-code": {
+      "small": { "model": "haiku", "effort": "low" },
+      "fast": { "model": "sonnet", "effort": "medium" },
+      "capable": { "model": "opus", "effort": "high" }
+    },
+    "codex": {},
+    "opencode": {}
+  },
+  "guard": {
+    "waitSeconds": 30,
+    "poll": true,
+    "subagentTier": true,
+    "subagentTypesWithModel": [],
+    "heavy": []
+  },
+  "quiet": {
+    "maxLines": 60,
+    "tailLines": 15
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "Bash|Agent|Task",
+        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.agent-economy/hooks/guard.mjs\" claude-code", "timeout": 5 }]
+      }
+    ],
+    "SessionStart": [
+      {
+        "hooks": [{ "type": "command", "command": "node \"$CLAUDE_PROJECT_DIR/.agent-economy/hooks/session-start.mjs\" claude-code", "timeout": 5 }]
+      }
+    ]
+  }
+}

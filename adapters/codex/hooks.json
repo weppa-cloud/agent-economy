@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "PreToolUse": [
+      {
+        "matcher": "exec_command|shell|shell_command|local_shell|unified_exec|sleep",
+        "hooks": [{ "type": "command", "command": "node \"$(git rev-parse --show-toplevel)/.agent-economy/hooks/guard.mjs\" codex", "timeout": 5 }]
+      }
+    ]
+  }
+}

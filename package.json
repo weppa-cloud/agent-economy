@@ -1,0 +1,11 @@
+{
+  "name": "agent-economy",
+  "version": "0.1.0",
+  "description": "Harness- and vendor-agnostic rules and hooks to spend fewer tokens in coding agents without losing quality.",
+  "license": "MIT",
+  "private": true,
+  "engines": { "node": ">=18" },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  }
+}
