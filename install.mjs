@@ -1,7 +1,7 @@
 #!/usr/bin/env node
 // Adopt agent-economy in a project. Idempotent: run it again to upgrade.
 //
-//   node install.mjs <project-dir> [--harness claude,codex,opencode] [--dry-run]
+//   node install.mjs <project-dir> [--harness claude,codex,opencode] [--lang en|es] [--dry-run]
 //
 // What it does (and nothing else):
 //   1. vendors the guard, session-start hook and `quiet` into <project>/.agent-economy/
@@ -39,7 +39,9 @@ export function mergeHooks(settings, adapter) {
   return { settings: out, added };
 }
 
-export function install(target, { harnesses = ['claude', 'codex', 'opencode'], dryRun = false, log = console.log } = {}) {
+export function install(target, { harnesses = ['claude', 'codex', 'opencode'], lang = 'en', dryRun = false, log = console.log } = {}) {
+  const policy = lang === 'en' ? 'POLICY.md' : `POLICY.${lang}.md`;
+  if (!existsSync(join(SRC, policy))) throw new Error(`no policy for language "${lang}"`);
   const root = resolve(target);
   if (!existsSync(root)) throw new Error(`no such directory: ${root}`);
   const write = (path, text) => { if (!dryRun) { mkdirSync(dirname(path), { recursive: true }); writeFileSync(path, text); } };
@@ -59,7 +61,7 @@ export function install(target, { harnesses = ['claude', 'codex', 'opencode'], d
   const claude = join(root, 'CLAUDE.md');
   const doc = existsSync(agents) ? realpathSync(agents) : existsSync(claude) ? realpathSync(claude) : agents;
   const before = existsSync(doc) ? readFileSync(doc, 'utf8') : '';
-  write(doc, upsertBlock(before, readFileSync(join(SRC, 'POLICY.md'), 'utf8')));
+  write(doc, upsertBlock(before, readFileSync(join(SRC, policy), 'utf8')));
   log(`${(before.includes(START) ? 'updated' : 'added').padEnd(9)} policy block in ${rel(doc)}${existsSync(agents) && lstatSync(agents).isSymbolicLink() ? ' (via AGENTS.md symlink)' : ''}`);
   if (!existsSync(agents)) log('note      no AGENTS.md: Codex, OpenCode, Cursor and Gemini CLI will not read the policy until one exists');
 
@@ -92,10 +94,11 @@ export function install(target, { harnesses = ['claude', 'codex', 'opencode'], d
 
 if (process.argv[1] && resolve(process.argv[1]) === fileURLToPath(import.meta.url)) {
   const args = process.argv.slice(2);
-  const target = args.find((a) => !a.startsWith('--') && args[args.indexOf(a) - 1] !== '--harness');
+  const target = args.find((a, i) => !a.startsWith('--') && !['--harness', '--lang'].includes(args[i - 1]));
+  const li = args.indexOf('--lang');
   const hi = args.indexOf('--harness');
-  if (!target) { console.error('usage: node install.mjs <project-dir> [--harness claude,codex,opencode] [--dry-run]'); process.exit(2); }
+  if (!target) { console.error('usage: node install.mjs <project-dir> [--harness claude,codex,opencode] [--lang en|es] [--dry-run]'); process.exit(2); }
   try {
-    install(target, { harnesses: hi >= 0 ? args[hi + 1].split(',') : undefined, dryRun: args.includes('--dry-run') });
+    install(target, { harnesses: hi >= 0 ? args[hi + 1].split(',') : undefined, lang: li >= 0 ? args[li + 1] : undefined, dryRun: args.includes('--dry-run') });
   } catch (err) { console.error(`install: ${err.message}`); process.exit(1); }
 }

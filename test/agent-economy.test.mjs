@@ -31,12 +31,15 @@ test('wait: configurable threshold and Codex sleep tool in ms', () => {
   assert.equal(bash('sleep 20', ctx({ config: { guard: { waitSeconds: 10 } } })).decision, 'deny');
   assert.equal(evaluate({ tool_name: 'sleep', tool_input: { duration_ms: 45000 } }, ctx()).decision, 'deny');
   assert.equal(evaluate({ tool_name: 'sleep', tool_input: { duration_ms: 2000 } }, ctx()).decision, 'allow');
+  assert.equal(bash('sleep 600', ctx({ config: { guard: { wait: false } } })).decision, 'allow');
 });
 
 test('poll: loops that sleep and `watch` are denied; loops without sleep pass', () => {
   assert.deepEqual(bash('until gh pr checks 12 | grep -q pass; do sleep 10; done').rules, ['poll']);
   assert.deepEqual(bash('watch -n 5 kubectl get pods').rules, ['poll']);
   assert.equal(bash('for f in a b; do echo $f; done').decision, 'allow');
+  const bg = evaluate({ tool_name: 'Bash', tool_input: { command: 'until x; do sleep 60; done', run_in_background: true } }, ctx());
+  assert.equal(bg.decision, 'allow');
   assert.equal(bash('until x; do sleep 10; done', ctx({ config: { guard: { poll: false } } })).decision, 'allow');
 });
 
@@ -134,6 +137,13 @@ test('install follows an AGENTS.md -> CLAUDE.md symlink and is idempotent', () =
   assert.match(readFileSync(join(dir, '.codex/config.toml'), 'utf8'), /hooks = true/);
   readFileSync(join(dir, '.agent-economy/hooks/guard.mjs'));
   readFileSync(join(dir, '.opencode/plugin/agent-economy.js'));
+});
+
+test('install --lang es writes the Spanish block; unknown language fails', () => {
+  const dir = tmp();
+  install(dir, { lang: 'es', harnesses: [], log: () => {} });
+  assert.match(readFileSync(join(dir, 'AGENTS.md'), 'utf8'), /Economía de agentes/);
+  assert.throws(() => install(tmp(), { lang: 'xx', log: () => {} }), /no policy/);
 });
 
 test('dry run writes nothing', () => {

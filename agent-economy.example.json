@@ -9,6 +9,7 @@
     "opencode": {}
   },
   "guard": {
+    "wait": true,
     "waitSeconds": 30,
     "poll": true,
     "subagentTier": true,

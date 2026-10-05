@@ -2,7 +2,7 @@
 // agent-economy guard: a PreToolUse hook for Claude Code and Codex (OpenCode calls `evaluate`
 // through its plugin). It only DENIES, and every denial names the cheaper path:
 //
-//   wait          `sleep N` with N >= guard.waitSeconds, or a sleep tool with that many ms
+//   wait          foreground `sleep N` with N >= guard.waitSeconds, or a sleep tool with that many ms
 //   poll          a shell loop (`while`/`until`/`for`) that sleeps, or `watch`: polling burns a
 //                 turn per check; use the harness's background wait or a `--watch` flag
 //   subagent-tier a subagent launched without an explicit model, so it silently inherits the
@@ -20,6 +20,7 @@ import { fileURLToPath } from 'node:url';
 
 const MAX_EVENT = 1024 * 1024;
 export const DEFAULTS = {
+  wait: true,
   waitSeconds: 30,
   poll: true,
   subagentTier: true,
@@ -174,17 +175,20 @@ export function evaluate(event, ctx = {}) {
 
   if (SLEEP_TOOL.test(name)) {
     const ms = sleepToolMs(input);
-    if (ms !== undefined && ms >= g.waitSeconds * 1000) reasons.set('wait', waitReason(g));
+    if (g.wait && ms !== undefined && ms >= g.waitSeconds * 1000) reasons.set('wait', waitReason(g));
   }
 
+  // A background shell (Claude Code `run_in_background`) neither blocks the session nor spends
+  // turns while it waits, so `wait` and `poll` do not apply; `heavy` still does.
+  const background = input && typeof input === 'object' && input.run_in_background === true;
   if (SHELL_TOOLS.has(name)) {
     for (const script of scriptsIn(input)) {
       const commands = splitShell(script);
       const loops = commands.some((w) => LOOP_WORDS.has(w[0]));
       for (const words of commands) {
         const secs = sleepSeconds(words);
-        if (secs !== undefined && secs >= g.waitSeconds) reasons.set('wait', waitReason(g));
-        if (g.poll && ((loops && secs !== undefined) || words[0] === 'watch')) {
+        if (!background && g.wait && secs !== undefined && secs >= g.waitSeconds) reasons.set('wait', waitReason(g));
+        if (!background && g.poll && ((loops && secs !== undefined) || words[0] === 'watch')) {
           reasons.set('poll', 'agent-economy: polling loop blocked; every check costs a turn of context. Run it in the background with the harness (background task / monitor) or use a blocking watch flag, e.g. `gh pr checks <n> --watch`, `gh run watch <id> --exit-status`, `kubectl wait`.');
         }
         const line = words.join(' ');

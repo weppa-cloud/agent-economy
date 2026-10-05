@@ -23,6 +23,7 @@ the parts a machine can check. A measurement script tells you whether it worked.
 | `hooks/guard.mjs` | A PreToolUse hook. It denies four things: foreground waits, polling loops, subagents without an explicit tier, and project-defined heavy commands. Each denial names the cheaper path. | Claude Code, Codex, OpenCode (plugin) |
 | `hooks/session-start.mjs` | Tells the agent which concrete models are small / fast / capable in this harness. | Claude Code |
 | `bin/quiet.mjs` | Runs a noisy command (tests, analyzers, builds) and shows only the failure lines and the tail. The full log stays on disk, and the exit code is kept. | Any, including harnesses without hooks |
+| `measure/claude-logs.mjs` | Weekly report per repo from Claude Code's local logs: weighted input, cache hit rate, capable-tier share, and the behaviours the guard targets. It gives you a retroactive baseline, because the logs already hold the weeks before adoption. | Claude Code |
 | `measure/cost-per-pr.sh` | Cost per merged PR over N days, with the cache hit rate. Data comes from `ccusage`, which reads the local logs of most harnesses. | Any |
 
 No dependencies: plain Node ≥ 18. Everything is vendored into your repo, so nothing is fetched
@@ -45,7 +46,8 @@ The installer is idempotent, so run it again to upgrade. It:
 4. Adds its hooks to `.claude/settings.json`, `.codex/hooks.json` (and `hooks = true`) and
    `.opencode/plugin/`, without touching hooks that are already there.
 
-Limit it with `--harness claude,codex`.
+Limit it with `--harness claude,codex`. Use `--lang es` for the Spanish policy block
+(`POLICY.es.md`); translations are welcome.
 
 Then:
 
